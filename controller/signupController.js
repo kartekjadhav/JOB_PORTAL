@@ -1,5 +1,7 @@
 import userModel from "../models/userModel.js";
 import z from "zod";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken"
 
 let signupDetailFormat = z.object({
     firstName: z.string().min(2).max(100),
@@ -9,41 +11,38 @@ let signupDetailFormat = z.object({
     location: z.string().min(4).max(100)
 })
 
-export const signupController = async (req, res) => {
-    const {firstName, lastName, email, password, location='India'} = req.body;
+export const signupController = async (req, res, next) => {
+    const {firstName=null, lastName=null, email=null, password=null, location='India'} = req.body;
     const parseResult = signupDetailFormat.safeParse({firstName, lastName, email, password, location})
 
     if (parseResult.success) {
         try {
             const userExists = await userModel.findOne({email});
             if (!userExists){
-                const user = await userModel.create({firstName, lastName, email, password, location});
-                console.log("New user created")
+                const hashedPass = await bcrypt.hash(password, 10);
+                const user = await userModel.create({firstName, lastName, email, password: hashedPass, location});
+                console.log("New user created");
+                const token = jwt.sign({id: user._id}, process.env.JWT_SECRET)
                 res.status(201).json({
                     success: true,
                     message: "User created",
-                    user
+                    user,
+                    token: token
                 })
             }
             else{
-                res.status(400).json({
-                    success: false,
-                    message: "User with given email already exits"
-                })    
+                next("User with given email already exits");    
             }
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "Server issue",
-                error: error
-            })    
+            next("Internal server error.")   
         }
     }
     else{
-        res.status(400).json({
-            success: false,
-            message: "Invalid signup details",
-            error: parseResult.error
-        })
+        let error = new Error(JSON.stringify({
+            field: parseResult.error.errors[0].path,
+            message: parseResult.error.errors[0].message
+        }))
+        error.status = 400;
+        next(error)
     }
 }

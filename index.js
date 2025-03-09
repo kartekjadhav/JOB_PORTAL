@@ -4,6 +4,7 @@ import connectDB from "./config/db.js"
 import cors from "cors"
 import morgan from "morgan"
 import signupRouter from "./routes/signupRouter.js"
+import {errorMiddleware} from "./middlewares/errorMiddleware.js"
 
 dotenv.config()
 const app = express();
@@ -19,12 +20,14 @@ app.use(morgan("dev"))
 //Routes
 app.use("/api/v1", signupRouter)
 
+//error middleware
+app.use(errorMiddleware)
 
 
 
 
-function initial_config(){
-    connectDB();
+async function initial_config(){
+    await connectDB();
     app.listen(3000, () => {console.log("Server is running")})
 }
 
