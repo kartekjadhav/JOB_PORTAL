@@ -4,6 +4,7 @@ import connectDB from "./config/db.js"
 import cors from "cors"
 import morgan from "morgan"
 import signupRouter from "./routes/signupRouter.js"
+import signinRouter from "./routes/signinRouter.js"
 import {errorMiddleware} from "./middlewares/errorMiddleware.js"
 
 dotenv.config()
@@ -19,6 +20,7 @@ app.use(morgan("dev"))
 
 //Routes
 app.use("/api/v1", signupRouter)
+app.use("/api/v1", signinRouter)
 
 //error middleware
 app.use(errorMiddleware)

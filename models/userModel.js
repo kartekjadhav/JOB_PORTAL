@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = mongoose.Schema({
     firstName: {
@@ -23,5 +24,10 @@ const userSchema = mongoose.Schema({
         default: "India"
     }
 }, {timestamp: true})
+
+userSchema.methods.passwordCompare = async function(pass){
+    let passwordCompareResult = await bcrypt.compare(pass, this.password)
+    return passwordCompareResult
+}
 
 export default mongoose.model("Users", userSchema);
